@@ -1,8 +1,8 @@
 {
-  "name": "openlp",
-  "version": "0.0.1",
+  "name": "openlp-http",
+  "version": "0.1.0",
   "description": "OpenLP integration for Companion",
-	"manufacturer": "OpenLP",
+	"manufacturer": "OpenLP Developers",
 	"product": "OpenLP",
   "shortname": "OpenLP",
   "main": "index.js",
@@ -10,7 +10,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
-    "OpenLP",
+    "Presentation",
     "Songs",
     "Lyrics"
   ],
