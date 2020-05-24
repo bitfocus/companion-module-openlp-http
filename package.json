@@ -1,19 +1,19 @@
 {
-  "name": "openlp-http",
-  "version": "0.1.0",
-  "description": "OpenLP integration for Companion",
-	"manufacturer": "OpenLP Developers",
-	"product": "OpenLP",
-  "shortname": "OpenLP",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [
-    "Presentation",
-    "Songs",
-    "Lyrics"
-  ],
-  "author": "Daniel Lang <ldaniell14260@gmail.com>",
-  "license": "MIT"
+	"name": "openlp-http",
+	"version": "0.1.0",
+	"description": "OpenLP integration for Companion",
+	"manufacturer": "OpenLP",
+	"product": "HTTP API",
+	"shortname": "openlp",
+	"main": "index.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"keywords": [
+		"Presentation",
+		"Songs",
+		"Lyrics"
+	],
+	"author": "Daniel Lang <ldaniell14260@gmail.com>",
+	"license": "MIT"
 }
