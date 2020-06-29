@@ -13,7 +13,7 @@ function instance(system, id, config) {
 
 
 // Return config fields for web config
-instance.prototype.config_fields = function() {
+instance.prototype.config_fields = function () {
 	var self = this;
 
 	return [
@@ -47,7 +47,7 @@ instance.prototype.config_fields = function() {
 	];
 }
 
-instance.prototype.init = function() {
+instance.prototype.init = function () {
 	var self = this;
 
 	self.init_variables();
@@ -60,17 +60,17 @@ instance.prototype.init = function() {
 	self.mode = -1;
 }
 
-instance.prototype.destroy = function() {
+instance.prototype.destroy = function () {
 	var self = this;
 
 	clearInterval(self.pollingInterval);
 }
 
 instance.prototype.choices_mode = [
-	{id: 0, label: 'Show',    path: 'show'},
-	{id: 1, label: 'Blank',   path: 'blank'},
-	{id: 2, label: 'Theme',   path: 'theme'},
-	{id: 3, label: 'Desktop', path: 'desktop'}
+	{ id: 0, label: 'Show', path: 'show' },
+	{ id: 1, label: 'Blank', path: 'blank' },
+	{ id: 2, label: 'Theme', path: 'theme' },
+	{ id: 3, label: 'Desktop', path: 'desktop' }
 ];
 
 instance.prototype.init_poll = function () {
@@ -98,16 +98,16 @@ instance.prototype.init_presets = function () {
 	var self = this;
 	var presets = [];
 	var size = '18';
-	
+
 	presets.push({
 		category: 'Slides',
-		label: 'Next',
+		label: 'Next Slide',
 		bank: {
 			style: 'text',
-			text: 'Next',
+			text: 'Next Slide',
 			size: size,
 			color: self.rgb(255, 255, 255),
-			bgolor: self.rgb(0,0,0)
+			bgolor: self.rgb(0, 0, 0)
 		},
 		actions: [{
 			action: 'next'
@@ -115,19 +115,49 @@ instance.prototype.init_presets = function () {
 	});
 
 	presets.push({
-		category: 'Slides',
-		label: 'Previous',
+		category: 'Service Items',
+		label: 'Next Service Item',
 		bank: {
 			style: 'text',
-			text: 'Prev',
+			text: 'Next Service Item',
 			size: size,
 			color: self.rgb(255, 255, 255),
-			bgcolor: self.rgb(0,0,0)
+			bgolor: self.rgb(0, 0, 0)
+		},
+		actions: [{
+			action: 'nextSi'
+		}]
+	});
+
+	presets.push({
+		category: 'Slides',
+		label: 'Previous Slide',
+		bank: {
+			style: 'text',
+			text: 'Prev Slide',
+			size: size,
+			color: self.rgb(255, 255, 255),
+			bgcolor: self.rgb(0, 0, 0)
 		},
 		actions: [{
 			action: 'previous'
 		}]
-	})
+	});
+
+	presets.push({
+		category: 'Service Items',
+		label: 'Prev Service Item',
+		bank: {
+			style: 'text',
+			text: 'Prev Service Item',
+			size: size,
+			color: self.rgb(255, 255, 255),
+			bgolor: self.rgb(0, 0, 0)
+		},
+		actions: [{
+			action: 'prevSi'
+		}]
+	});
 
 	for (var mode in self.choices_mode) {
 		presets.push({
@@ -138,7 +168,7 @@ instance.prototype.init_presets = function () {
 				size: size,
 				text: self.choices_mode[mode].label,
 				color: self.rgb(255, 255, 255),
-				bgcolor: self.rgb(0,0,0)
+				bgcolor: self.rgb(0, 0, 0)
 			},
 			actions: [{
 				action: 'mode',
@@ -151,7 +181,7 @@ instance.prototype.init_presets = function () {
 				options: {
 					mode: self.choices_mode[mode].id,
 					background: self.rgb(0, 0, 255),
-					foreground: self.rgb(255,255,255)
+					foreground: self.rgb(255, 255, 255)
 				}
 			}]
 		});
@@ -198,12 +228,14 @@ instance.prototype.init_feedbacks = function () {
 	self.setFeedbackDefinitions(feedbacks);
 }
 
-instance.prototype.actions = function() {
+instance.prototype.actions = function () {
 	var self = this;
 
 	self.system.emit('instance_actions', self.id, {
-		'next': {label: 'Next Slide'},
-		'previous': {label: 'Previous Slide'},
+		'next': { label: 'Next Slide' },
+		'previous': { label: 'Previous Slide' },
+		'nextSi': { label: 'Next Service Item' },
+		'prevSi': { label: 'Prev Service Item' },
 		'mode': {
 			label: 'Display Mode',
 			options: [
@@ -219,41 +251,37 @@ instance.prototype.actions = function() {
 	});
 }
 
-instance.prototype.action = function(action) {
+instance.prototype.action = function (action) {
 	var self = this;
 
 	var headers = {};
 	if (self.config.username && self.config.password) {
 		headers['Authorization'] = 'Basic ' + Buffer.from(self.config.username + ':' + self.config.password).toString('base64');
 	}
-
-	if (action.action == 'mode') {
-		var path = self.choices_mode[action.options.mode].path;
-
-		self.system.emit('rest_get', 'http://' + self.config.ip + ':' + self.config.port + '/api/display/' + path, function (err, result) {
-			self.interpretResult(err, result);
-		}, headers);
+	var urlBase = 'http://' + self.config.ip + ':' + self.config.port + '/api';
+	var urlAction = '';
+	switch (action.action) {
+		case 'mode':
+			var path = self.choices_mode[action.options.mode].path;
+			urlAction = '/display/' + path;
+			break;
+		case 'nextSi':
+			urlAction = '/service/next';
+			break;
+		case 'prevSi':
+			urlAction = '/service/previous';
+			break;
+		case 'next':
+			urlAction = '/controller/live/next';
+			break;
+		case 'previous':
+			urlAction = '/controller/live/previous';
+			break;
 	}
-	else if (action.action == 'next' || action.action == 'previous') {
-		var slide = self.data.slide;
 
-		if (action.action == 'next') {
-			slide++;
-		}
-		else if (slide > 0) {
-			slide--;
-		}
-
-		var data = {
-			request: {
-				id: slide
-			}
-		};
-
-		self.system.emit('rest_get', 'http://' + self.config.ip + ':' + self.config.port + '/api/controller/live/set?data=' + encodeURIComponent(JSON.stringify(data)), function (err, result) {
-			self.interpretResult(err, result);
-		}, headers);
-	}
+	self.system.emit('rest_get', urlBase + urlAction, function (err, result) {
+		self.interpretResult(err, result);
+	}, headers);
 }
 
 instance.prototype.interpretResult = function (err, result) {
@@ -278,7 +306,7 @@ instance.prototype.interpretResult = function (err, result) {
 	}
 }
 
-instance.prototype.feedback = function(feedback) {
+instance.prototype.feedback = function (feedback) {
 	var self = this;
 
 	if (feedback.type == 'mode') {
@@ -288,12 +316,12 @@ instance.prototype.feedback = function(feedback) {
 	}
 }
 
-instance.prototype.updateConfig = function(config) {
+instance.prototype.updateConfig = function (config) {
 	var self = this;
 	self.config = config;
 }
 
-instance.prototype.poll = function() {
+instance.prototype.poll = function () {
 	var self = this;
 
 	// no config set yet - so no polling
