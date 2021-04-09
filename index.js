@@ -58,6 +58,7 @@ instance.prototype.init = function () {
 	self.data = {};
 	self.auth_error = false;
 	self.mode = -1;
+	self.polling = true;
 }
 
 instance.prototype.destroy = function () {
@@ -282,6 +283,7 @@ instance.prototype.action = function (action) {
 	self.system.emit('rest_get', urlBase + urlAction, function (err, result) {
 		self.interpretResult(err, result);
 	}, headers);
+	self.polling = true; // Turn on polling when a command has been sent - will be turned off again elsewhere e.g. if OpenLP is not running
 }
 
 instance.prototype.interpretResult = function (err, result) {
@@ -290,6 +292,7 @@ instance.prototype.interpretResult = function (err, result) {
 	if (err !== null) {
 		self.log('error', 'HTTP GET Request failed (' + result.error.code + ')');
 		self.status(self.STATUS_ERROR, result.error.code);
+		self.polling = false; // Turn off polling to avoid filling up Companion log e.g. if OpenLP is not running
 	}
 	else {
 		if (result.response.statusCode == 401) {
@@ -329,15 +332,21 @@ instance.prototype.poll = function () {
 		return;
 	}
 
+	// No polling if earlier communication with OpenLP failed, e.g. if OpenLP is not running
+	if (!self.polling) {
+		return;
+	}
+
 	var headers = {};
 	if (self.config.username && self.config.password) {
 		headers['Authorization'] = 'Basic ' + Buffer.from(self.config.username + ':' + self.config.password).toString('base64');
 	}
-
+	
 	self.system.emit('rest_get', 'http://' + self.config.ip + ':' + self.config.port + '/api/poll', function (err, result) {
 		if (err !== null) {
 			self.log('error', 'HTTP GET Request failed (' + result.error.code + ')');
 			self.status(self.STATUS_ERROR, result.error.code);
+			self.polling = false; // Turn off polling to avoid filling up Companion log e.g. if OpenLP is not running
 		}
 		else {
 			self.data = result.data.results;
