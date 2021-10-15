@@ -245,7 +245,7 @@ instance.prototype.actions = function () {
 					id: 'mode',
 					label: 'mode',
 					default: 0,
-					choices: self.choices_mode
+					choices: [...self.choices_mode, { id: 4, label: 'Toggle show/blank', path: 'toggle' }],
 				}
 			]
 		}
@@ -263,7 +263,15 @@ instance.prototype.action = function (action) {
 	var urlAction = '';
 	switch (action.action) {
 		case 'mode':
-			var path = self.choices_mode[action.options.mode].path;
+			var path;
+			if (action.options.mode == 4) {
+				path = 'blank';
+				if (self.mode == 1) {
+					path = 'show';
+				}
+			} else {
+				path = self.choices_mode[action.options.mode].path;
+			}
 			urlAction = '/display/' + path;
 			break;
 		case 'nextSi':
