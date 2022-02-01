@@ -1,4 +1,5 @@
 var instance_skel = require('../../instance_skel')
+const upgradeScripts = require('./upgrades')
 var WebSocket = require('ws')
 
 class instance extends instance_skel {
@@ -106,11 +107,11 @@ class instance extends instance_skel {
 		this.init_feedbacks()
 
 		if (this.config.ip) {
-			if (this.config.version == 'v2') {
-				this.init_v2_poll()
-			} else {
+			if (this.config.version == 'v3') {
 				this.config.port = 4316
 				this.init_v3_ws()
+			} else {
+				this.init_v2_poll()
 			}
 		} else {
 			this.status(this.STATUS_WARNING, 'No host configured')
@@ -253,34 +254,36 @@ class instance extends instance_skel {
 			}
 		})
 
-		presets.push({
-			category: 'Services/Slides (v3)',
-			label: 'Go to slide #1',
-			bank: {
-				style: 'text',
-				text: 'Go to slide #1',
-				color: this.rgb(255, 255, 255),
-				bgcolor: this.rgb(0, 0, 0),
-			},
-			actions: [
-				{
-					action: 'go_to_slide',
-					options: { slide: 0 },
+		if (this.config.version == 'v3') {
+			presets.push({
+				category: 'Services/Slides',
+				label: 'Go to slide #1',
+				bank: {
+					style: 'text',
+					text: 'Go to slide #1',
+					color: this.rgb(255, 255, 255),
+					bgcolor: this.rgb(0, 0, 0),
 				},
-			],
-			feedbacks: [
-				{
-					type: 'slide',
-					options: {
-						slide: 0,
+				actions: [
+					{
+						action: 'go_to_slide',
+						options: { slide: 0 },
 					},
-					style: {
-						bgcolor: this.rgb(255, 0, 0),
-						color: this.rgb(255, 255, 255),
+				],
+				feedbacks: [
+					{
+						type: 'slide',
+						options: {
+							slide: 0,
+						},
+						style: {
+							bgcolor: this.rgb(255, 0, 0),
+							color: this.rgb(255, 255, 255),
+						},
 					},
-				},
-			],
-		})
+				],
+			})
+		}
 
 		this.choices_mode.forEach((mode) => {
 			presets.push({
@@ -361,6 +364,7 @@ class instance extends instance_skel {
 			instance_skel.CreateConvertToBooleanFeedbackUpgradeScript({
 				mode: true,
 			}),
+			upgradeScripts.setDefaultVersion2,
 		]
 	}
 
@@ -432,8 +436,10 @@ class instance extends instance_skel {
 					},
 				],
 			},
-			go_to_slide: {
-				label: 'Go to slide number (counted from 0, v3)',
+		}
+		if (this.config.version == 'v3') {
+			actions.go_to_slide = {
+				label: 'Go to slide number (counted from 0)',
 				options: [
 					{
 						type: 'number',
@@ -445,32 +451,32 @@ class instance extends instance_skel {
 						range: false,
 					},
 				],
-			},
-			/*
-			progress: {
-				label: 'Progress',
-				options: [
-					{
-						type: 'dropdown',
-						label: 'Direction',
-						id: 'direction',
-						default: 0,
-						choices: this.choices_progress,
-						minChoicesForSearch: 0,
-					},
-				],
-			},
-			*/
+			}
 		}
+		/*
+		progress: {
+			label: 'Progress',
+			options: [
+				{
+					type: 'dropdown',
+					label: 'Direction',
+					id: 'direction',
+					default: 0,
+					choices: this.choices_progress,
+					minChoicesForSearch: 0,
+				},
+			],
+		},
+		*/
 
 		this.setActions(actions)
 	}
 
 	action = (action) => {
-		if (this.config.version == 'v2') {
-			this.actionV2(action)
-		} else {
+		if (this.config.version == 'v3') {
 			this.actionV3(action)
+		} else {
+			this.actionV2(action)
 		}
 	}
 

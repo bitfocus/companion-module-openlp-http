@@ -14,6 +14,9 @@
 		"Songs",
 		"Lyrics"
 	],
+	"bugs": {
+		"url": "https://github.com/bitfocus/companion-module-openlp-http/issues"
+	},
 	"author": "Daniel Lang <ldaniell14260@gmail.com>",
 	"license": "MIT"
 }
