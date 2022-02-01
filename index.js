@@ -41,7 +41,7 @@ class instance extends instance_skel {
 				type: 'dropdown',
 				label: 'OpenLP version',
 				id: 'version',
-				default: 'v3',
+				default: 'v2',
 				width: 5,
 				choices: [
 					{ id: 'v3', label: '3.0' },
