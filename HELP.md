@@ -18,15 +18,20 @@ This module lets you interact with [OpenLP](https://openlp.org/), an open source
 
 - Set display mode (blank/show/desktop/theme)
 - Toggle display mode (show/blank)
-- Go to specific slide number (inside current service item, in 3.0 only)
+- Go to specific slide number (by number)
+- Go to specific service item (by number)
 - Progress into next/previous slide/service item
 
 ### Available Variables
 
 - Current display mode
 - Current slide number
+- Current selected service item
+- Service item title #1, title #2, ... up to 20
 
 ### Available Feedbacks
 
 - Current display mode
 - Current slide number
+- Service item selected (by number)
+- Service item on specific slide (by number)

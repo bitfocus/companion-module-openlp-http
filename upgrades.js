@@ -1,9 +1,18 @@
 module.exports = {
-	setDefaultVersion2: function (context, config) {
+	updates013: function (context, config) {
+		let changed = false
 		if (!config.version) {
 			config.version = 'v2'
-			return true
+			changed = true
 		}
-		return false
+		if (!config.serviceItemEmptyText) {
+			config.serviceItemEmptyText = '-'
+			changed = true
+		}
+		if (!config.serviceItemLimit) {
+			config.serviceItemLimit = 7
+			changed = true
+		}
+		return changed
 	},
 }

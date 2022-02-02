@@ -70,16 +70,16 @@ class instance extends instance_skel {
 			},
 			{
 				type: 'text',
-				id: 'info',
+				id: 'info1',
 				width: 12,
 				label: '',
 				value: '<br>',
 			},
 			{
 				type: 'text',
-				id: 'info',
+				id: 'info2',
 				width: 12,
-				label: 'Optional Settings',
+				label: 'Optional Auth Settings',
 				value: '',
 			},
 			{
@@ -96,6 +96,38 @@ class instance extends instance_skel {
 				tooltip: 'The password in case login is required',
 				width: 5,
 			},
+			{
+				type: 'text',
+				id: 'info3',
+				width: 12,
+				label: '',
+				value: '<br>',
+			},
+			{
+				type: 'text',
+				id: 'info4',
+				width: 12,
+				label: 'Service list fetching',
+				value: '',
+			},
+			{
+				type: 'number',
+				id: 'serviceItemLimit',
+				label: 'Service items max count (0 to disable)',
+				default: 7,
+				tooltip: 'How many service items fetch',
+				width: 6,
+				min: 0,
+				max: 20,
+			},
+			{
+				type: 'textinput',
+				id: 'serviceItemEmptyText',
+				label: 'Empty string',
+				default: '-',
+				tooltip: 'What to display as empty value',
+				width: 5,
+			},
 		]
 	}
 
@@ -106,23 +138,29 @@ class instance extends instance_skel {
 		this.init_presets()
 		this.init_feedbacks()
 
+		this.service_increment = -1 // incremental version counter
+		this.current_si = -1 // counted from 0
+		this.current_slide = -1 // counted from 0
+		this.current_si_uid = 'asdf' // current service item
+		this.v3_service_list_data = [] // for switching SI in v3
+		this.mode = -1
+
 		if (this.config.ip) {
 			if (this.config.version == 'v3') {
 				this.config.port = 4316
-				this.init_v3_ws()
+				this.initV3()
 			} else {
-				this.init_v2_poll()
+				this.initV2()
 			}
 		} else {
 			this.status(this.STATUS_WARNING, 'No host configured')
 		}
 
 		this.auth_error = false
-		this.mode = -1
 		this.polling = true
 	}
 
-	init_v3_ws = () => {
+	initV3 = () => {
 		this.system.emit(
 			'rest_get',
 			'http://' + this.config.ip + ':' + this.config.port + '/api/v2/core/system',
@@ -170,7 +208,7 @@ class instance extends instance_skel {
 			this.status(this.STATUS_ERROR, `Connection closed with code ${code}`)
 		})
 
-		this.ws.on('message', this.interpretData)
+		this.ws.on('message', this.interpretPollData)
 
 		this.ws.on('error', (data) => {
 			this.log('error', `WebSocket error: ${data}`)
@@ -200,6 +238,7 @@ class instance extends instance_skel {
 
 	destroy = () => {
 		clearInterval(this.pollingInterval)
+
 		if (this.ws !== undefined) {
 			this.ws.close(1000)
 			delete this.ws
@@ -214,14 +253,14 @@ class instance extends instance_skel {
 		this.status(this.STATUS_WARNING, 'Limited connection, only variables will work. Login is required.')
 	}
 
-	init_v2_poll = () => {
+	initV2 = () => {
 		this.pollingInterval = setInterval(() => {
 			this.poll()
 		}, 500)
 	}
 
 	init_variables = () => {
-		this.setVariableDefinitions([
+		const vars = [
 			{
 				label: 'Current display mode',
 				name: 'display_mode',
@@ -230,14 +269,26 @@ class instance extends instance_skel {
 				name: 'slide',
 				label: 'Current slide number',
 			},
-		])
-		//this.setVariable('display_mode', 'Unknown')
+			{
+				name: 'service_item',
+				label: 'Current service item',
+			},
+		]
+
+		for (let i = 1; i <= this.config.serviceItemLimit; i++) {
+			vars.push({ name: `si_${i}`, label: `${i}. service item` })
+			//vars.push({ name: `si_${i}_short`, label: `${i}. service item short` })
+			//vars.push({ name: `si_${i}_type`, label: `${i}. service item type` })
+			//vars.push({ name: `si_${i}_selected`, label: `${i}. service item selected state` })
+		}
+
+		this.setVariableDefinitions(vars)
 	}
 
 	init_presets = () => {
 		let presets = this.choices_progress.map((a) => {
 			return {
-				category: 'Services/Slides',
+				category: 'Service items & Slides',
 				label: a.label,
 				bank: {
 					style: 'text',
@@ -254,36 +305,64 @@ class instance extends instance_skel {
 			}
 		})
 
-		if (this.config.version == 'v3') {
-			presets.push({
-				category: 'Services/Slides',
-				label: 'Go to slide #1',
-				bank: {
-					style: 'text',
-					text: 'Go to slide #1',
-					color: this.rgb(255, 255, 255),
-					bgcolor: this.rgb(0, 0, 0),
+		presets.push({
+			category: 'Service items & Slides',
+			label: '1 $(openlp:si_1)',
+			bank: {
+				style: 'text',
+				size: '14',
+				text: '1 $(openlp:si_1)',
+				color: this.rgb(255, 255, 255),
+				bgcolor: this.rgb(0, 0, 0),
+			},
+			actions: [
+				{
+					action: 'gotoSi',
+					options: { si: 1 },
 				},
-				actions: [
-					{
-						action: 'go_to_slide',
-						options: { slide: 0 },
+			],
+			feedbacks: [
+				{
+					type: 'fbk_si',
+					options: {
+						si: 1,
 					},
-				],
-				feedbacks: [
-					{
-						type: 'slide',
-						options: {
-							slide: 0,
-						},
-						style: {
-							bgcolor: this.rgb(255, 0, 0),
-							color: this.rgb(255, 255, 255),
-						},
+					style: {
+						bgcolor: this.rgb(255, 0, 0),
+						color: this.rgb(255, 255, 255),
 					},
-				],
-			})
-		}
+				},
+			],
+		})
+
+		presets.push({
+			category: 'Service items & Slides',
+			label: 'Slide 1',
+			bank: {
+				style: 'text',
+				text: 'Slide 1',
+				color: this.rgb(255, 255, 255),
+				bgcolor: this.rgb(0, 0, 0),
+			},
+			actions: [
+				{
+					action: 'gotoSlide',
+					options: { slide: 1 },
+				},
+			],
+			feedbacks: [
+				{
+					type: 'fbk_slide',
+					options: {
+						slide: 1,
+					},
+					style: {
+						bgcolor: this.rgb(255, 0, 0),
+						color: this.rgb(255, 255, 255),
+					},
+				},
+			],
+		})
 
 		this.choices_mode.forEach((mode) => {
 			presets.push({
@@ -364,7 +443,7 @@ class instance extends instance_skel {
 			instance_skel.CreateConvertToBooleanFeedbackUpgradeScript({
 				mode: true,
 			}),
-			upgradeScripts.setDefaultVersion2,
+			upgradeScripts.updates013,
 		]
 	}
 
@@ -373,8 +452,7 @@ class instance extends instance_skel {
 			mode: {
 				type: 'boolean',
 				label: 'Display mode state change',
-				description:
-					'Changes the foreground and background color of the bank if the display mode changes to the defined state',
+				description: 'Triggers if the display mode changes to the defined state',
 				style: {
 					color: this.rgb(255, 255, 255),
 					bgcolor: this.rgb(0, 0, 255),
@@ -392,10 +470,10 @@ class instance extends instance_skel {
 					return this.display_mode == feedback.options.mode
 				},
 			},
-			slide: {
+			fbk_slide: {
 				type: 'boolean',
-				label: 'Presentation on specified slide',
-				description: 'Changes the foreground and background color of the bank if the slide is on defined place',
+				label: 'Service item on specified slide',
+				description: 'Triggers if the slide is on defined place',
 				style: {
 					color: this.rgb(255, 255, 255),
 					bgcolor: this.rgb(255, 0, 0),
@@ -405,11 +483,33 @@ class instance extends instance_skel {
 						type: 'number',
 						label: 'Slide',
 						id: 'slide',
-						default: 0,
+						default: 1,
+						min: 1,
 					},
 				],
 				callback: (feedback) => {
-					return this.current_slide == feedback.options.slide
+					return this.current_slide + 1 == feedback.options.slide
+				},
+			},
+			fbk_si: {
+				type: 'boolean',
+				label: 'Service Item selected',
+				description: 'Triggers if the specific service item is selected',
+				style: {
+					color: this.rgb(255, 255, 255),
+					bgcolor: this.rgb(255, 0, 0),
+				},
+				options: [
+					{
+						type: 'number',
+						label: 'Service Item',
+						id: 'si',
+						default: 1,
+						min: 1,
+					},
+				],
+				callback: (feedback) => {
+					return this.current_si + 1 == feedback.options.si
 				},
 			},
 		}
@@ -436,23 +536,38 @@ class instance extends instance_skel {
 					},
 				],
 			},
-		}
-		if (this.config.version == 'v3') {
-			actions.go_to_slide = {
-				label: 'Go to slide number (counted from 0)',
+			gotoSi: {
+				label: 'Select Service Item',
+				options: [
+					{
+						type: 'number',
+						label: 'Service Item',
+						id: 'si',
+						min: 1,
+						default: 1,
+					},
+				],
+			},
+			gotoSlide: {
+				label: 'Select slide (in service item)',
 				options: [
 					{
 						type: 'number',
 						label: 'Slide',
 						id: 'slide',
-						min: 0,
-						default: 0,
-						required: true,
-						range: false,
+						min: 1,
+						default: 1,
 					},
 				],
+			},
+		}
+
+		if (this.config.version == 'v2') {
+			actions.refreshSiList = {
+				label: 'Refresh service items list',
 			}
 		}
+
 		/*
 		progress: {
 			label: 'Progress',
@@ -481,14 +596,15 @@ class instance extends instance_skel {
 	}
 
 	actionV2 = (action) => {
-		const headers = {}
-		if (this.config.username && this.config.password) {
-			headers['Authorization'] =
-				'Basic ' + Buffer.from(this.config.username + ':' + this.config.password).toString('base64')
-		}
-
 		let urlAction = ''
 		switch (action.action) {
+			case 'gotoSi':
+				urlAction = 'service/set?data=' + JSON.stringify({ request: { id: Number(action.options.si - 1) } })
+				break
+			case 'refreshSiList':
+				console.log('refreshSiList')
+				this.fetchServiceListV2()
+				return
 			case 'mode':
 				let path = action.options.mode
 				if (action.options.mode == 'toggle') {
@@ -508,25 +624,28 @@ class instance extends instance_skel {
 			case 'previous':
 				urlAction = 'controller/live/previous'
 				break
-			case 'go_to_slide':
-				this.status(this.STATUS_WARNING, 'go_to_slide not supported in Openlp 2.4')
+			case 'gotoSlide':
+				urlAction = 'controller/live/set?data=' + JSON.stringify({ request: { id: Number(action.options.slide - 1) } })
 				break
 		}
 		const url = 'http://' + this.config.ip + ':' + this.config.port + '/api/' + urlAction
-		//console.log(url)
-		this.system.emit('rest_get', url, this.interpretActionResult, headers)
+		console.log(url)
+		this.system.emit('rest_get', url, this.interpretActionResult, this.headersV2())
 		this.polling = true // Turn on polling when a command has been sent - will be turned off again elsewhere e.g. if OpenLP is not running
 	}
 
-	actionV3 = (action) => {
+	headersV3 = () => {
 		const headers = {}
-		if (this.is_login_required) {
-			if (this.token) {
-				headers['Authorization'] = 'Basic ' + this.token
-			} else {
-				this.throw401Warning()
-				return
-			}
+		if (this.is_login_required && this.token) {
+			headers['Authorization'] = 'Basic ' + this.token
+		}
+		return headers
+	}
+
+	actionV3 = (action) => {
+		if (this.is_login_required && !this.token) {
+			this.throw401Warning()
+			return
 		}
 
 		let urlAction = ''
@@ -566,15 +685,19 @@ class instance extends instance_skel {
 					action: 'previous',
 				}
 				break
-			case 'go_to_slide':
+			case 'gotoSlide':
 				urlAction = 'controller/show'
-				param = { id: action.options.slide }
+				param = { id: action.options.slide - 1 }
+				break
+			case 'gotoSi':
+				urlAction = 'service/show'
+				param = { id: this.v3_service_list_data[action.options.si - 1].id }
 				break
 		}
 
 		const url = (this.is_secure ? 'https' : 'http') + `://${this.config.ip}:${this.config.port}/api/v2/${urlAction}`
 		//console.log(url, param)
-		this.system.emit('rest', url, param, this.interpretActionResult, headers)
+		this.system.emit('rest', url, param, this.interpretActionResult, this.headersV3())
 	}
 
 	interpretActionResult = (err, result) => {
@@ -597,9 +720,7 @@ class instance extends instance_skel {
 
 	updateConfig = (config) => {
 		this.config = config
-
 		clearInterval(this.pollingInterval)
-
 		this.init()
 	}
 
@@ -612,12 +733,6 @@ class instance extends instance_skel {
 		// No polling if earlier communication with OpenLP failed, e.g. if OpenLP is not running
 		if (!this.polling) {
 			return
-		}
-
-		var headers = {}
-		if (this.config.username && this.config.password) {
-			headers['Authorization'] =
-				'Basic ' + Buffer.from(this.config.username + ':' + this.config.password).toString('base64')
 		}
 
 		this.system.emit(
@@ -633,14 +748,23 @@ class instance extends instance_skel {
 					if (!this.auth_error) {
 						this.status(this.STATUS_OK)
 					}
-					this.interpretData(result.data.results)
+					this.interpretPollData(result.data.results)
 				}
 			},
-			headers
+			this.headersV2()
 		)
 	}
 
-	interpretData = (data) => {
+	headersV2 = () => {
+		const headers = {}
+		if (this.config.username && this.config.password) {
+			headers['Authorization'] =
+				'Basic ' + Buffer.from(this.config.username + ':' + this.config.password).toString('base64')
+		}
+		return headers
+	}
+
+	interpretPollData = (data) => {
 		if (this.config.version == 'v3') {
 			let msgValue = null
 			try {
@@ -650,11 +774,27 @@ class instance extends instance_skel {
 			}
 			data = msgValue.results
 		}
-		//console.log(data)
 		this.is_secure = data.isSecure
+		console.log(data)
+		let chkFbkSlide = false
+		if (data.slide != this.current_slide) {
+			chkFbkSlide = true
+		}
+
+		if (data.service > this.service_increment || data.item != this.current_si_uid) {
+			chkFbkSlide = true
+			this.fetchCurrentServiceList()
+		}
 
 		// for proper feedback
 		this.current_slide = data.slide
+		this.service_increment = data.service
+		this.current_si_uid = data.item
+		this.setVariable('slide', data.slide + 1)
+
+		if (chkFbkSlide) {
+			this.checkFeedbacks('fbk_slide')
+		}
 
 		let mode = 'Show'
 		if (data.blank) {
@@ -664,14 +804,70 @@ class instance extends instance_skel {
 		} else if (data.theme) {
 			mode = 'Theme'
 		}
-
-		// for correct toggling action/feedbacks
 		this.display_mode = mode.toLowerCase()
-
-		this.setVariable('slide', data.slide)
 		this.setVariable('display_mode', mode)
-		this.checkFeedbacks('slide')
 		this.checkFeedbacks('mode')
+	}
+
+	fetchCurrentServiceList = () => {
+		if (this.config.version == 'v3') {
+			this.fetchServiceListV3()
+		} else {
+			this.fetchServiceListV2()
+		}
+	}
+
+	fetchServiceListV2 = () => {
+		this.system.emit(
+			'rest_get',
+			'http://' + this.config.ip + ':' + this.config.port + '/api/service/list',
+			(err, result) => {
+				if (err !== null) {
+					this.log('error', 'HTTP GET Request failed (' + result.error.code + ')')
+					this.status(this.STATUS_ERROR, result.error.code)
+					this.polling = false // Turn off polling to avoid filling up Companion log e.g. if OpenLP is not running
+				} else {
+					this.interpretServiceListData(result.data.results.items)
+				}
+			},
+			this.headersV2()
+		)
+	}
+	fetchServiceListV3 = () => {
+		this.system.emit(
+			'rest_get',
+			'http://' + this.config.ip + ':' + this.config.port + '/api/v2/service/items',
+			(err, result) => {
+				if (err !== null) {
+					this.log('error', 'HTTP GET Request failed (' + result.error.code + ')')
+					this.status(this.STATUS_ERROR, result.error.code)
+					this.polling = false // Turn off polling to avoid filling up Companion log e.g. if OpenLP is not running
+				} else {
+					this.v3_service_list_data = result.data
+					this.interpretServiceListData(result.data)
+				}
+			},
+			this.headersV3()
+		)
+	}
+
+	interpretServiceListData = (items) => {
+		items.forEach((si, i) => {
+			this.setVariable(`si_${i + 1}`, si.title)
+			//this.setVariable(`si_${i + 1}_short`, si.title.substr(0, 15))
+			//this.setVariable(`si_${i + 1}_type`, si.plugin)
+			if (si.selected) {
+				this.current_si = i
+				this.setVariable('service_item', si.title)
+				//this.setVariable(`current_si_short`, si.title.substr(0, 15))
+			}
+		})
+		for (let i = items.length + 1; i <= this.config.serviceItemLimit; i++) {
+			this.setVariable(`si_${i}`, this.config.serviceItemEmptyText)
+			//this.setVariable(`si_${i}_short`, this.config.serviceItemEmptyText)
+			//this.setVariable(`si_${i}_type`, this.config.serviceItemEmptyText)
+		}
+		this.checkFeedbacks('fbk_si')
 	}
 }
 
