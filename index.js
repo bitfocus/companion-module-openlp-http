@@ -602,7 +602,6 @@ class instance extends instance_skel {
 				urlAction = 'service/set?data=' + JSON.stringify({ request: { id: Number(action.options.si - 1) } })
 				break
 			case 'refreshSiList':
-				console.log('refreshSiList')
 				this.fetchServiceListV2()
 				return
 			case 'mode':
@@ -629,7 +628,7 @@ class instance extends instance_skel {
 				break
 		}
 		const url = 'http://' + this.config.ip + ':' + this.config.port + '/api/' + urlAction
-		console.log(url)
+		//console.log(url)
 		this.system.emit('rest_get', url, this.interpretActionResult, this.headersV2())
 		this.polling = true // Turn on polling when a command has been sent - will be turned off again elsewhere e.g. if OpenLP is not running
 	}
@@ -775,7 +774,7 @@ class instance extends instance_skel {
 			data = msgValue.results
 		}
 		this.is_secure = data.isSecure
-		console.log(data)
+		//console.log(data)
 		let chkFbkSlide = false
 		if (data.slide != this.current_slide) {
 			chkFbkSlide = true
