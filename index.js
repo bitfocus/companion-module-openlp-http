@@ -232,7 +232,7 @@ instance.prototype.init_feedbacks = function () {
 instance.prototype.actions = function () {
 	var self = this;
 
-	self.system.emit('instance_actions', self.id, {
+	self.setActions({
 		'next': { label: 'Next Slide' },
 		'previous': { label: 'Previous Slide' },
 		'nextSi': { label: 'Next Service Item' },
