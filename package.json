@@ -15,5 +15,14 @@
 		"Lyrics"
 	],
 	"author": "Daniel Lang <ldaniell14260@gmail.com>",
-	"license": "MIT"
+	"license": "MIT",
+	"homepage": "https://github.com/bitfocus/companion-module-openlp-http#readme",
+	"bugs": {
+		"url": "https://github.com/bitfocus/companion-module-openlp-http/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/bitfocus/companion-module-openlp-http.git"
+	},
+	"api_version": "1.0.0"
 }
