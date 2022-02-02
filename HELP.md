@@ -11,7 +11,7 @@ This module lets you interact with [OpenLP](https://openlp.org/), an open source
 ### Configuration in Companion
 
 - Select your OpenLP version 2.4 or 3.0
-- Type in the IP address (127.0.0.1 if running locally) and port of the device
+- Type in the IP address (127.0.0.1 if running locally) and port previously set in OpenLP application
 - Set user and password if required
 
 ### Available Actions
