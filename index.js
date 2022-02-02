@@ -452,7 +452,7 @@ class instance extends instance_skel {
 			mode: {
 				type: 'boolean',
 				label: 'Display mode',
-				description: 'If the display in defined state',
+				description: 'If the display in defined mode, change style of the bank',
 				style: {
 					color: this.rgb(255, 255, 255),
 					bgcolor: this.rgb(0, 0, 255),
