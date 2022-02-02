@@ -451,8 +451,8 @@ class instance extends instance_skel {
 		const feedbacks = {
 			mode: {
 				type: 'boolean',
-				label: 'Display mode state change',
-				description: 'Triggers if the display mode changes to the defined state',
+				label: 'Display mode',
+				description: 'If the display in defined state',
 				style: {
 					color: this.rgb(255, 255, 255),
 					bgcolor: this.rgb(0, 0, 255),
@@ -460,7 +460,7 @@ class instance extends instance_skel {
 				options: [
 					{
 						type: 'dropdown',
-						label: 'Display mode',
+						label: 'Mode',
 						id: 'mode',
 						choices: this.choices_mode,
 						default: 'show',
@@ -473,7 +473,7 @@ class instance extends instance_skel {
 			fbk_slide: {
 				type: 'boolean',
 				label: 'Service item on specified slide',
-				description: 'Triggers if the slide is on defined place',
+				description: 'If specific slide is active, change style of the bank',
 				style: {
 					color: this.rgb(255, 255, 255),
 					bgcolor: this.rgb(255, 0, 0),
@@ -493,8 +493,8 @@ class instance extends instance_skel {
 			},
 			fbk_si: {
 				type: 'boolean',
-				label: 'Service Item selected',
-				description: 'Triggers if the specific service item is selected',
+				label: 'Service item active',
+				description: 'If specific service item is active, change style of the bank',
 				style: {
 					color: this.rgb(255, 255, 255),
 					bgcolor: this.rgb(255, 0, 0),
@@ -502,7 +502,7 @@ class instance extends instance_skel {
 				options: [
 					{
 						type: 'number',
-						label: 'Service Item',
+						label: 'Service item',
 						id: 'si',
 						default: 1,
 						min: 1,
@@ -521,10 +521,10 @@ class instance extends instance_skel {
 		const actions = {
 			next: { label: 'Next Slide' },
 			previous: { label: 'Previous Slide' },
-			nextSi: { label: 'Next Service Item' },
-			prevSi: { label: 'Prev Service Item' },
+			nextSi: { label: 'Next Service item' },
+			prevSi: { label: 'Prev Service item' },
 			mode: {
-				label: 'Set display mode',
+				label: 'Display mode',
 				options: [
 					{
 						type: 'dropdown',
@@ -537,11 +537,11 @@ class instance extends instance_skel {
 				],
 			},
 			gotoSi: {
-				label: 'Select Service Item',
+				label: 'Specific Service item',
 				options: [
 					{
 						type: 'number',
-						label: 'Service Item',
+						label: 'Service item',
 						id: 'si',
 						min: 1,
 						default: 1,
@@ -549,7 +549,7 @@ class instance extends instance_skel {
 				],
 			},
 			gotoSlide: {
-				label: 'Select slide (in service item)',
+				label: 'Specific Slide (in current Service item)',
 				options: [
 					{
 						type: 'number',
@@ -564,7 +564,7 @@ class instance extends instance_skel {
 
 		if (this.config.version == 'v2') {
 			actions.refreshSiList = {
-				label: 'Refresh service items list',
+				label: 'Refresh Service items list',
 			}
 		}
 
