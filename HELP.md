@@ -12,7 +12,7 @@ This module lets you interact with [OpenLP](https://openlp.org/), an open source
 
 - Select your OpenLP version 2.4 or 3.0
 - Type in the IP address (127.0.0.1 if running locally) and port previously set in OpenLP application
-- Set user and password if required
+- Set username and password if required
 
 ### Available Actions
 
@@ -25,13 +25,13 @@ This module lets you interact with [OpenLP](https://openlp.org/), an open source
 ### Available Variables
 
 - Current display mode
-- Current slide number
+- Current slide number, current slide tag, slide count in current service
 - Current selected service item
-- Service item title #1, title #2, ... up to 20
+- Service item title si_1, si_2, ... up to 20
+- Slide tag and name slide_1, slide_tag_1, slide_2, ... up to 20
 
 ### Available Feedbacks
 
 - Current display mode
-- Current slide number
 - Service item selected (by number)
 - Service item on specific slide (by number)

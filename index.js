@@ -120,15 +120,25 @@ class instance extends instance_skel {
         id: 'info4',
         width: 12,
         label: 'Service list fetching',
-        value: '',
+        value: 'Specify how many items fetch into variables si_#, slide_# and slide_tag_#',
       },
       {
         type: 'number',
         id: 'serviceItemLimit',
-        label: 'Service items max count (0 to disable)',
+        label: 'Service items max count',
         default: 7,
-        tooltip: 'How many service items fetch',
-        width: 6,
+        tooltip: 'Number of service items fetched into variables',
+        width: 4,
+        min: 0,
+        max: 20,
+      },
+      {
+        type: 'number',
+        id: 'slideItemLimit',
+        label: 'Slides max count',
+        default: 12,
+        tooltip: 'Number or slides fetched into variables',
+        width: 4,
         min: 0,
         max: 20,
       },
@@ -138,7 +148,7 @@ class instance extends instance_skel {
         label: 'Empty string',
         default: '-',
         tooltip: 'What to display as empty value',
-        width: 5,
+        width: 4,
       },
     ]
   }
@@ -281,8 +291,16 @@ class instance extends instance_skel {
         label: 'Current slide number',
       },
       {
+        name: 'slide_tag',
+        label: 'Current slide tag',
+      },
+      {
         name: 'service_item',
         label: 'Current service item',
+      },
+      {
+        name: 'slides_cnt',
+        label: 'Number of slides in current service item',
       },
     ]
 
@@ -291,6 +309,11 @@ class instance extends instance_skel {
       //vars.push({ name: `si_${i}_short`, label: `${i}. service item short` })
       //vars.push({ name: `si_${i}_type`, label: `${i}. service item type` })
       //vars.push({ name: `si_${i}_selected`, label: `${i}. service item selected state` })
+    }
+
+    for (let i = 1; i <= this.config.slideItemLimit; i++) {
+      vars.push({ name: `slide_${i}`, label: `${i}. slide` })
+      vars.push({ name: `slide_tag_${i}`, label: `${i}. slide tag` })
     }
 
     this.setVariableDefinitions(vars)
@@ -316,63 +339,68 @@ class instance extends instance_skel {
       }
     })
 
-    presets.push({
-      category: 'Service items & Slides',
-      label: '1 $(openlp:si_1)',
-      bank: {
-        style: 'text',
-        size: '14',
-        text: '1 $(openlp:si_1)',
-        color: this.rgb(255, 255, 255),
-        bgcolor: this.rgb(0, 0, 0),
-      },
-      actions: [
-        {
-          action: 'gotoSi',
-          options: { si: 1 },
+    Array.from({ length: 3 }, (x, i) => i).forEach((i) => {
+      i++
+      presets.push({
+        category: 'Service items & Slides',
+        label: i + ' $(openlp:si_' + i + ')',
+        bank: {
+          style: 'text',
+          size: '14',
+          text: i + ' $(openlp:si_' + i + ')',
+          color: this.rgb(255, 255, 255),
+          bgcolor: this.rgb(0, 0, 0),
         },
-      ],
-      feedbacks: [
-        {
-          type: 'fbk_si',
-          options: {
-            si: 1,
+        actions: [
+          {
+            action: 'gotoSi',
+            options: { si: i },
           },
-          style: {
-            bgcolor: this.rgb(255, 0, 0),
-            color: this.rgb(255, 255, 255),
+        ],
+        feedbacks: [
+          {
+            type: 'fbk_si',
+            options: {
+              si: i,
+            },
+            style: {
+              bgcolor: this.rgb(255, 0, 0),
+              color: this.rgb(255, 255, 255),
+            },
           },
-        },
-      ],
+        ],
+      })
     })
-
-    presets.push({
-      category: 'Service items & Slides',
-      label: 'Slide 1',
-      bank: {
-        style: 'text',
-        text: 'Slide 1',
-        color: this.rgb(255, 255, 255),
-        bgcolor: this.rgb(0, 0, 0),
-      },
-      actions: [
-        {
-          action: 'gotoSlide',
-          options: { slide: 1 },
+    Array.from({ length: 3 }, (x, i) => i).forEach((i) => {
+      i++
+      presets.push({
+        category: 'Service items & Slides',
+        label: 'Slide $(openlp:slide_tag_' + i + ')',
+        bank: {
+          style: 'text',
+          text: 'Slide $(openlp:slide_tag_' + i + ')',
+          color: this.rgb(255, 255, 255),
+          bgcolor: this.rgb(0, 0, 0),
         },
-      ],
-      feedbacks: [
-        {
-          type: 'fbk_slide',
-          options: {
-            slide: 1,
+        actions: [
+          {
+            action: 'gotoSlide',
+            options: { slide: i },
           },
-          style: {
-            bgcolor: this.rgb(255, 0, 0),
-            color: this.rgb(255, 255, 255),
+        ],
+        feedbacks: [
+          {
+            type: 'fbk_slide',
+            options: {
+              slide: i,
+            },
+            style: {
+              bgcolor: this.rgb(255, 0, 0),
+              color: this.rgb(255, 255, 255),
+            },
           },
-        },
-      ],
+        ],
+      })
     })
 
     this.choices_mode.forEach((mode) => {
@@ -455,6 +483,7 @@ class instance extends instance_skel {
         mode: true,
       }),
       upgradeScripts.updates013,
+      upgradeScripts.updates016,
     ]
   }
 
@@ -579,22 +608,6 @@ class instance extends instance_skel {
       }
     }
 
-    /*
-    progress: {
-      label: 'Progress',
-      options: [
-        {
-          type: 'dropdown',
-          label: 'Direction',
-          id: 'direction',
-          default: 0,
-          choices: this.choices_progress,
-          minChoicesForSearch: 0,
-        },
-      ],
-    },
-    */
-
     this.setActions(actions)
   }
 
@@ -635,6 +648,9 @@ class instance extends instance_skel {
         urlAction = 'controller/live/previous'
         break
       case 'gotoSlide':
+        if (action.options.slide > this.slides_cnt) {
+          return
+        }
         urlAction = 'controller/live/set?data=' + JSON.stringify({ request: { id: Number(action.options.slide - 1) } })
         break
     }
@@ -696,6 +712,9 @@ class instance extends instance_skel {
         }
         break
       case 'gotoSlide':
+        if (action.options.slide > this.slides_cnt) {
+          return
+        }
         urlAction = 'controller/show'
         param = { id: action.options.slide - 1 }
         break
@@ -706,12 +725,11 @@ class instance extends instance_skel {
     }
 
     const url = `http://${this.config.ip}:${this.config.port}/api/v2/${urlAction}`
-    console.log(url, param)
+    //console.log(url, param)
     this.system.emit('rest', url, param, this.interpretActionResult, this.headersV3())
   }
 
   interpretActionResult = (err, result) => {
-    //console.log(err, result)
     if (err !== null) {
       this.log('error', 'HTTP Request failed (' + result.error.code + ')')
       this.status(this.STATUS_ERROR, result.error.code)
@@ -786,7 +804,7 @@ class instance extends instance_skel {
       data = msgValue.results
     }
     this.isSecure = data.isSecure
-    console.log(data)
+    //console.log(data)
     let chkFbkSlide = false
     if (data.slide != this.current_slide) {
       chkFbkSlide = true
@@ -863,6 +881,7 @@ class instance extends instance_skel {
   }
 
   interpretServiceListData = (items) => {
+    if (!Array.isArray(items)) return
     items.forEach((si, i) => {
       this.setVariable(`si_${i + 1}`, si.title)
       //this.setVariable(`si_${i + 1}_short`, si.title.substr(0, 15))
@@ -879,6 +898,67 @@ class instance extends instance_skel {
       //this.setVariable(`si_${i}_type`, this.config.serviceItemEmptyText)
     }
     this.checkFeedbacks('fbk_si')
+    this.loadSlides()
+  }
+
+  loadSlides = () => {
+    this.slides_cnt = 0
+    if (this.config.version == 'v3') {
+      this.loadSlidesV3()
+    } else {
+      this.loadSlidesV2()
+    }
+  }
+  loadSlidesV2 = () => {
+    this.system.emit(
+      'rest_get',
+      'http://' + this.config.ip + ':' + this.config.port + '/api/controller/live/text',
+      (err, result) => {
+        if (err !== null) {
+          this.log('error', 'HTTP GET Request failed (' + result.error.code + ')')
+          this.status(this.STATUS_ERROR, result.error.code)
+          this.polling = false // Turn off polling to avoid filling up Companion log e.g. if OpenLP is not running
+        } else {
+          this.interpretSlideListData(result.data.results.slides)
+        }
+      },
+      this.headersV2()
+    )
+  }
+  loadSlidesV3 = () => {
+    this.system.emit(
+      'rest_get',
+      'http://' + this.config.ip + ':' + this.config.port + '/api/v2/controller/live-items',
+      (err, result) => {
+        if (err !== null) {
+          this.log('error', 'HTTP GET Request failed (' + result.error.code + ')')
+          this.status(this.STATUS_ERROR, result.error.code)
+          this.polling = false // Turn off polling to avoid filling up Companion log e.g. if OpenLP is not running
+        } else {
+          this.interpretSlideListData(result.data.slides)
+        }
+      },
+      this.headersV3()
+    )
+  }
+
+  interpretSlideListData = (slides) => {
+    if (!Array.isArray(slides)) return
+    this.setVariable('slides_cnt', slides.length)
+    this.slides_cnt = slides.length
+    slides.forEach((sl, i) => {
+      this.setVariable(`slide_tag_${i + 1}`, sl.tag)
+      this.setVariable(`slide_${i + 1}`, sl.text.substr(0, 19))
+      if (sl.selected) {
+        this.current_slide = i
+        this.setVariable('slide_tag', sl.tag)
+      }
+    })
+    for (let i = slides.length + 1; i <= this.config.slideItemLimit; i++) {
+      this.setVariable(`slide_tag_${i}`, this.config.serviceItemEmptyText)
+      this.setVariable(`slide_${i}`, this.config.serviceItemEmptyText)
+    }
+    this.checkFeedbacks('fbk_slide')
   }
 }
 
