@@ -1,6 +1,6 @@
-var instance_skel = require("../../instance_skel");
+const instance_skel = require("../../instance_skel");
 const upgradeScripts = require("./upgrades");
-var WebSocket = require("ws");
+const WebSocket = require("ws");
 
 class instance extends instance_skel {
   constructor(system, id, config) {
