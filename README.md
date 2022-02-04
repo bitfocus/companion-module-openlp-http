@@ -4,6 +4,10 @@ See [HELP.md](https://github.com/bitfocus/companion-module-openlp-http/blob/mast
 
 ## Changelog
 
+**0.1.6**
+
+- Switching between slides using tags: V1, C1, C2, P1, ...
+
 **0.1.5**
 
 - re-written to ES6

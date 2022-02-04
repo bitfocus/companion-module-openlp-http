@@ -1,6 +1,6 @@
 {
 	"name": "openlp-http",
-	"version": "0.1.5",
+	"version": "0.1.6",
 	"description": "OpenLP integration for Companion",
 	"manufacturer": "OpenLP",
 	"product": "HTTP API",
