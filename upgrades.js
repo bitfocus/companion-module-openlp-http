@@ -25,19 +25,19 @@ module.exports = {
 			let action = actions[k]
 			if (action.action == 'mode') {
 				if (action.options.mode == '0') {
-					action.options.mode == 'show'
+					action.options.mode = 'show'
 					changed = true
 				} else if (action.options.mode == '1') {
-					action.options.mode == 'blank'
+					action.options.mode = 'blank'
 					changed = true
 				} else if (action.options.mode == '2') {
-					action.options.mode == 'theme'
+					action.options.mode = 'theme'
 					changed = true
 				} else if (action.options.mode == '3') {
-					action.options.mode == 'desktop'
+					action.options.mode = 'desktop'
 					changed = true
 				} else if (action.options.mode == '4') {
-					action.options.mode == 'toggle'
+					action.options.mode = 'toggle'
 					changed = true
 				}
 			}
